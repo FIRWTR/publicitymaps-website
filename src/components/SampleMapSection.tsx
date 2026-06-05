@@ -1,260 +1,341 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
+import Link from "next/link";
+import type { MapLocation } from "./MapLeaflet";
 
-type Zone = {
-  id: string;
-  label: string;
-  tier: "green" | "yellow" | "red";
-  score: number;
-  traffic: string;
-  address: string;
-  cx: number;
-  cy: number;
-};
+const MapLeaflet = dynamic(() => import("./MapLeaflet"), {
+  ssr: false,
+  loading: () => (
+    <div className="h-full w-full flex items-center justify-center bg-slate-50">
+      <div className="flex flex-col items-center gap-3">
+        <div className="w-8 h-8 border-2 border-[#0066FF] border-t-transparent rounded-full animate-spin" />
+        <span className="text-sm text-slate-400">Loading map…</span>
+      </div>
+    </div>
+  ),
+});
 
-const ZONES: Zone[] = [
-  { id: "z1", label: "Main & Oak", tier: "green", score: 94, traffic: "18,400/day", address: "Main St & Oak Ave", cx: 52, cy: 36 },
-  { id: "z2", label: "5th & Commerce", tier: "green", score: 89, traffic: "15,200/day", address: "5th Ave & Commerce Blvd", cx: 28, cy: 56 },
-  { id: "z3", label: "River Pkwy", tier: "green", score: 82, traffic: "12,800/day", address: "River Parkway N", cx: 70, cy: 26 },
-  { id: "z4", label: "Park Blvd", tier: "yellow", score: 71, traffic: "9,400/day", address: "Park Boulevard", cx: 78, cy: 58 },
-  { id: "z5", label: "Pine & 3rd", tier: "yellow", score: 66, traffic: "7,100/day", address: "Pine St & 3rd Ave", cx: 42, cy: 72 },
-  { id: "z6", label: "Industrial Dr", tier: "red", score: 48, traffic: "3,200/day", address: "Industrial Drive", cx: 16, cy: 32 },
-  { id: "z7", label: "Back Rd", tier: "red", score: 38, traffic: "1,800/day", address: "Old Back Road", cx: 85, cy: 80 },
+const ALL_LOCATIONS: MapLocation[] = [
+  {
+    id: 1,
+    name: "Mill Plain Blvd & Chkalov Dr",
+    area: "Vancouver East",
+    coords: [45.627, -122.58],
+    score: 92,
+    traffic: "28,400/day",
+    signType: "Large-format banner",
+    customerFit: "Excellent — high homeownership, median income $78K",
+    action: "Place 4×8 banner facing westbound traffic on Mill Plain",
+    zone: "high",
+    categories: ["all", "home-services", "signs", "events"],
+  },
+  {
+    id: 2,
+    name: "NE 78th St & Highway 99",
+    area: "Hazel Dell",
+    coords: [45.68, -122.668],
+    score: 87,
+    traffic: "22,100/day",
+    signType: "Yard signs + vehicle wrap",
+    customerFit: "Strong — dense residential, 68% homeowners",
+    action: "Deploy yard signs at 3 key intersections before weekend",
+    zone: "high",
+    categories: ["all", "home-services", "political", "signs"],
+  },
+  {
+    id: 3,
+    name: "SE 192nd Ave & SE Mill Plain",
+    area: "Fisher's Landing",
+    coords: [45.604, -122.504],
+    score: 84,
+    traffic: "19,800/day",
+    signType: "A-frame + yard signs",
+    customerFit: "Strong — newer development, growing families",
+    action: "Target weekend traffic with A-frame signage near retail",
+    zone: "high",
+    categories: ["all", "home-services", "political", "events", "signs"],
+  },
+  {
+    id: 4,
+    name: "SR-14 & NW 38th Ave",
+    area: "Camas",
+    coords: [45.588, -122.406],
+    score: 78,
+    traffic: "14,200/day",
+    signType: "Directional signs",
+    customerFit: "Good — affluent suburb, avg household income $95K",
+    action: "Use directional signs pointing toward your service area",
+    zone: "medium",
+    categories: ["all", "home-services", "signs", "events"],
+  },
+  {
+    id: 5,
+    name: "NE 112th Ave & SR-500",
+    area: "Orchards",
+    coords: [45.659, -122.573],
+    score: 74,
+    traffic: "12,900/day",
+    signType: "Vehicle route wrap",
+    customerFit: "Good — high-density residential corridor",
+    action: "Brand service trucks — high repeat impressions per route",
+    zone: "medium",
+    categories: ["all", "vehicle-routes", "home-services"],
+  },
+  {
+    id: 6,
+    name: "E Main St & Broadway",
+    area: "Downtown Vancouver",
+    coords: [45.626, -122.672],
+    score: 71,
+    traffic: "11,400/day",
+    signType: "Event banners",
+    customerFit: "Moderate — mixed commercial/residential, foot traffic",
+    action: "Book banner placements 2 weeks before events",
+    zone: "medium",
+    categories: ["all", "events", "political", "signs"],
+  },
+  {
+    id: 7,
+    name: "W Main St & NW 10th Ave",
+    area: "Battle Ground",
+    coords: [45.782, -122.532],
+    score: 68,
+    traffic: "8,700/day",
+    signType: "Yard signs",
+    customerFit: "Good — high homeownership rural community",
+    action: "Yard sign blitz before weekend market traffic peaks",
+    zone: "medium",
+    categories: ["all", "political", "home-services", "signs"],
+  },
+  {
+    id: 8,
+    name: "NE Salmon Creek Ave & I-5",
+    area: "Salmon Creek",
+    coords: [45.726, -122.683],
+    score: 63,
+    traffic: "16,200/day",
+    signType: "High-visibility roadside",
+    customerFit: "Moderate — commuter corridor, high pass-through volume",
+    action: "High-visibility placement timed for AM/PM commute windows",
+    zone: "medium",
+    categories: ["all", "vehicle-routes", "signs"],
+  },
+  {
+    id: 9,
+    name: "NE Andresen Rd & NE 4th Plain",
+    area: "Andresen Corridor",
+    coords: [45.651, -122.639],
+    score: 58,
+    traffic: "9,100/day",
+    signType: "Temporary signs",
+    customerFit: "Low-moderate — mixed zoning, lower conversion rate",
+    action: "Test with temporary signage before committing budget",
+    zone: "low",
+    categories: ["all", "signs", "events"],
+  },
+  {
+    id: 10,
+    name: "Washougal River Rd & 3rd St",
+    area: "Washougal",
+    coords: [45.581, -122.353],
+    score: 44,
+    traffic: "5,200/day",
+    signType: "Not recommended",
+    customerFit: "Poor — low traffic density, limited residential reach",
+    action: "Avoid — low ROI. Redirect this budget to Mill Plain.",
+    zone: "low",
+    categories: ["all", "signs"],
+  },
 ];
 
-const TIER_COLORS = {
-  green: { fill: "rgba(0,208,132,0.15)", stroke: "#00D084", pin: "#00D084", bg: "#DCFCE7", text: "#15803D", label: "Best Visibility" },
-  yellow: { fill: "rgba(245,158,11,0.12)", stroke: "#F59E0B", pin: "#F59E0B", bg: "#FEF9C3", text: "#92400E", label: "Moderate Visibility" },
-  red: { fill: "rgba(239,68,68,0.10)", stroke: "#EF4444", pin: "#EF4444", bg: "#FEE2E2", text: "#991B1B", label: "Poor Visibility" },
+const FILTERS = [
+  { key: "all", label: "All Locations" },
+  { key: "home-services", label: "Home Services" },
+  { key: "signs", label: "Signs" },
+  { key: "vehicle-routes", label: "Vehicle Routes" },
+  { key: "political", label: "Political Campaign" },
+  { key: "events", label: "Events" },
+];
+
+const ZONE_META = {
+  high:   { color: "#00D084", bg: "#DCFCE7", label: "High opportunity" },
+  medium: { color: "#F59E0B", bg: "#FEF9C3", label: "Moderate opportunity" },
+  low:    { color: "#EF4444", bg: "#FEE2E2", label: "Low opportunity" },
 };
 
 export default function SampleMapSection() {
-  const [activeZone, setActiveZone] = useState<Zone | null>(null);
+  const [activeFilter, setActiveFilter] = useState("all");
+  const [activeId, setActiveId] = useState<number | null>(null);
+  const [flyTarget, setFlyTarget] = useState<[number, number] | null>(null);
+
+  const visible = ALL_LOCATIONS.filter((l) => l.categories.includes(activeFilter));
+  const ranked = [...visible].sort((a, b) => b.score - a.score);
+
+  function handleSidebarClick(loc: MapLocation) {
+    setActiveId(loc.id);
+    setFlyTarget([...loc.coords] as [number, number]);
+  }
+
+  function handlePinClick(id: number) {
+    setActiveId((prev) => (prev === id ? null : id));
+  }
 
   return (
-    <section id="sample-map" className="py-24 bg-white">
+    <section id="sample-map" className="py-24 bg-slate-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-2xl mx-auto mb-12">
+
+        {/* Header */}
+        <div className="text-center max-w-2xl mx-auto mb-10">
           <div className="inline-flex items-center gap-2 bg-blue-50 rounded-full px-3.5 py-1.5 mb-4">
             <div className="w-1.5 h-1.5 rounded-full bg-[#0066FF]" />
             <span className="text-xs font-semibold text-[#0066FF] tracking-wide uppercase">
-              Interactive Demo
+              Live Demo — Clark County, WA
             </span>
           </div>
           <h2 className="text-4xl sm:text-5xl font-black tracking-tight text-slate-900 mb-4">
-            See Your Market At A Glance
+            See Your Market at a Glance
           </h2>
           <p className="text-lg text-slate-500">
-            Every PublicityMap™ shows you exactly which zones to target and which to avoid — color-coded for instant clarity.
+            This is what your report looks like. Click any pin to see the full breakdown — then filter by business type.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-          {/* Map */}
-          <div className="lg:col-span-2">
-            <div className="relative rounded-2xl overflow-hidden border border-slate-100 shadow-xl shadow-slate-100/50 bg-[#F8FAFC]">
-              {/* Map header bar */}
-              <div className="bg-white border-b border-slate-100 px-4 py-3 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-yellow-400" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-green-400" />
-                  <span className="ml-2 text-xs text-slate-500 font-medium">PublicityMap™ — Sample Report</span>
-                </div>
-                <span className="text-[10px] text-slate-400">7 locations analyzed</span>
+        {/* Dashboard card */}
+        <div className="rounded-2xl border border-slate-200 shadow-2xl shadow-slate-200/60 overflow-hidden bg-white">
+
+          {/* Control bar */}
+          <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-slate-100 bg-white">
+
+            {/* Filters */}
+            <div className="flex flex-wrap items-center gap-1.5">
+              {FILTERS.map((f) => (
+                <button
+                  key={f.key}
+                  onClick={() => { setActiveFilter(f.key); setActiveId(null); }}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                    activeFilter === f.key
+                      ? "bg-[#0066FF] text-white shadow-sm shadow-blue-500/20"
+                      : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Legend + CTA */}
+            <div className="flex items-center gap-4">
+              <div className="hidden sm:flex items-center gap-3 text-[11px] text-slate-500">
+                {(["high", "medium", "low"] as const).map((z) => (
+                  <span key={z} className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full" style={{ background: ZONE_META[z].color }} />
+                    {ZONE_META[z].label}
+                  </span>
+                ))}
               </div>
-
-              {/* SVG Map */}
-              <div className="relative">
-                <svg viewBox="0 0 400 280" className="w-full" xmlns="http://www.w3.org/2000/svg">
-                  {/* Background */}
-                  <rect width="400" height="280" fill="#F8FAFC" />
-
-                  {/* Street grid */}
-                  <g stroke="#E2E8F0" fill="none">
-                    <line x1="0" y1="56" x2="400" y2="56" strokeWidth="2" />
-                    <line x1="0" y1="112" x2="400" y2="112" strokeWidth="3" />
-                    <line x1="0" y1="168" x2="400" y2="168" strokeWidth="2" />
-                    <line x1="0" y1="224" x2="400" y2="224" strokeWidth="2" />
-                    <line x1="80" y1="0" x2="80" y2="280" strokeWidth="2" />
-                    <line x1="160" y1="0" x2="160" y2="280" strokeWidth="3" />
-                    <line x1="240" y1="0" x2="240" y2="280" strokeWidth="2" />
-                    <line x1="320" y1="0" x2="320" y2="280" strokeWidth="2" />
-                  </g>
-
-                  {/* City blocks */}
-                  <g fill="#F1F5F9" stroke="#E8EDF3" strokeWidth="0.5">
-                    {[
-                      [82, 58, 76, 52], [162, 58, 76, 52], [242, 58, 76, 52], [322, 58, 76, 52],
-                      [2, 58, 76, 52], [82, 114, 76, 52], [162, 114, 76, 52], [242, 114, 76, 52],
-                      [322, 114, 76, 52], [2, 114, 76, 52], [82, 170, 76, 52], [162, 170, 76, 52],
-                      [242, 170, 76, 52], [322, 170, 76, 52],
-                    ].map(([x, y, w, h], i) => (
-                      <rect key={i} x={x} y={y} width={w} height={h} rx="2" />
-                    ))}
-                  </g>
-
-                  {/* Zone heat overlays */}
-                  {ZONES.map((zone) => {
-                    const colors = TIER_COLORS[zone.tier];
-                    const cx = (zone.cx / 100) * 400;
-                    const cy = (zone.cy / 100) * 280;
-                    const r = zone.tier === "green" ? 48 : zone.tier === "yellow" ? 38 : 28;
-                    return (
-                      <g key={zone.id}>
-                        <circle
-                          cx={cx}
-                          cy={cy}
-                          r={r}
-                          fill={colors.fill}
-                          style={{ cursor: "pointer" }}
-                          onClick={() => setActiveZone(zone === activeZone ? null : zone)}
-                        />
-                        {activeZone?.id === zone.id && (
-                          <circle
-                            cx={cx}
-                            cy={cy}
-                            r={r + 4}
-                            fill="none"
-                            stroke={colors.stroke}
-                            strokeWidth="1.5"
-                            strokeDasharray="4 3"
-                            opacity="0.7"
-                          />
-                        )}
-                      </g>
-                    );
-                  })}
-
-                  {/* Road labels */}
-                  <text x="200" y="109" textAnchor="middle" fontSize="6" fill="#94A3B8" fontFamily="Inter" fontWeight="500">Main Street</text>
-                  <text x="158" y="140" textAnchor="middle" fontSize="6" fill="#94A3B8" fontFamily="Inter" fontWeight="500" transform="rotate(-90 158 140)">Commerce Blvd</text>
-
-                  {/* Location pins */}
-                  {ZONES.map((zone) => {
-                    const colors = TIER_COLORS[zone.tier];
-                    const cx = (zone.cx / 100) * 400;
-                    const cy = (zone.cy / 100) * 280;
-                    const isActive = activeZone?.id === zone.id;
-                    return (
-                      <g
-                        key={zone.id}
-                        style={{ cursor: "pointer" }}
-                        onClick={() => setActiveZone(zone === activeZone ? null : zone)}
-                      >
-                        {/* Pin shadow */}
-                        <ellipse cx={cx} cy={cy + 2} rx="5" ry="2" fill="rgba(0,0,0,0.1)" />
-                        {/* Pin body */}
-                        <path
-                          d={`M${cx} ${cy - 1} C${cx} ${cy - 1} ${cx - 7} ${cy - 13} ${cx - 7} ${cy - 17} A7 7 0 0 1 ${cx + 7} ${cy - 17} C${cx + 7} ${cy - 13} ${cx} ${cy - 1} ${cx} ${cy - 1}Z`}
-                          fill={isActive ? colors.pin : colors.pin}
-                          stroke="white"
-                          strokeWidth="1.5"
-                          style={{
-                            filter: isActive ? `drop-shadow(0 0 6px ${colors.pin}80)` : "none",
-                            transform: isActive ? "scale(1.3)" : "scale(1)",
-                            transformOrigin: `${cx}px ${cy}px`,
-                            transition: "transform 0.2s ease",
-                          }}
-                        />
-                        <circle cx={cx} cy={cy - 17} r="3" fill="white" />
-                        {/* Score badge */}
-                        <rect x={cx + 9} y={cy - 24} width="22" height="12" rx="6" fill="white" stroke={colors.stroke} strokeWidth="0.8" />
-                        <text x={cx + 20} y={cy - 15} textAnchor="middle" fontSize="6" fontWeight="700" fill={colors.text} fontFamily="Inter, sans-serif">
-                          {zone.score}
-                        </text>
-                      </g>
-                    );
-                  })}
+              <Link
+                href="/pricing"
+                className="flex-shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#0066FF] text-white text-xs font-bold hover:bg-[#0052CC] transition-colors shadow-sm shadow-blue-500/20"
+              >
+                Get My Custom PublicityMap
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M2.5 6h7M6 2.5l3.5 3.5L6 9.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-
-                {/* Active zone popup */}
-                {activeZone && (
-                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white rounded-2xl shadow-2xl border border-slate-100 p-4 min-w-[200px] z-10">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
-                        {activeZone.address}
-                      </span>
-                      <button onClick={() => setActiveZone(null)} className="text-slate-300 hover:text-slate-500 text-xs">✕</button>
-                    </div>
-                    <div className="flex items-end gap-2 mb-2">
-                      <span
-                        className="text-3xl font-black"
-                        style={{ color: TIER_COLORS[activeZone.tier].pin }}
-                      >
-                        {activeZone.score}
-                      </span>
-                      <span className="text-sm text-slate-400 pb-1">/100 Visibility Score</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-slate-500">
-                      <span>🚗 {activeZone.traffic}</span>
-                      <span className="w-1 h-1 rounded-full bg-slate-300" />
-                      <span
-                        className="font-semibold"
-                        style={{ color: TIER_COLORS[activeZone.tier].text }}
-                      >
-                        {TIER_COLORS[activeZone.tier].label}
-                      </span>
-                    </div>
-                  </div>
-                )}
-              </div>
+              </Link>
             </div>
           </div>
 
-          {/* Legend + zone list */}
-          <div className="space-y-4">
-            {/* Legend */}
-            <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm">
-              <h3 className="text-sm font-bold text-slate-900 mb-3">Zone Legend</h3>
-              {(["green", "yellow", "red"] as const).map((tier) => {
-                const c = TIER_COLORS[tier];
-                return (
-                  <div key={tier} className="flex items-center gap-3 mb-2.5">
-                    <div
-                      className="w-4 h-4 rounded-full border-2"
-                      style={{ backgroundColor: c.fill, borderColor: c.pin }}
-                    />
-                    <div>
-                      <div className="text-xs font-semibold text-slate-700">{c.label}</div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+          {/* Body */}
+          <div className="flex" style={{ height: 560 }}>
 
-            {/* Location list */}
-            <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm">
-              <h3 className="text-sm font-bold text-slate-900 mb-3">All Locations</h3>
-              <div className="space-y-2">
-                {[...ZONES].sort((a, b) => b.score - a.score).map((zone) => {
-                  const c = TIER_COLORS[zone.tier];
+            {/* Sidebar */}
+            <div className="hidden lg:flex flex-col w-72 border-r border-slate-100 bg-white overflow-hidden">
+              <div className="px-4 py-3 border-b border-slate-50">
+                <p className="text-xs font-bold text-slate-900">
+                  Top Locations
+                </p>
+                <p className="text-[11px] text-slate-400 mt-0.5">
+                  {visible.length} locations · click to zoom
+                </p>
+              </div>
+              <div className="overflow-y-auto flex-1 py-2">
+                {ranked.map((loc, rank) => {
+                  const meta = ZONE_META[loc.zone];
+                  const isActive = activeId === loc.id;
                   return (
                     <button
-                      key={zone.id}
-                      onClick={() => setActiveZone(zone === activeZone ? null : zone)}
-                      className="w-full flex items-center justify-between p-2 rounded-xl hover:bg-slate-50 transition-colors text-left group"
+                      key={loc.id}
+                      onClick={() => handleSidebarClick(loc)}
+                      className={`w-full px-4 py-3 flex items-start gap-3 text-left transition-colors ${
+                        isActive ? "bg-blue-50 border-l-2 border-[#0066FF]" : "hover:bg-slate-50 border-l-2 border-transparent"
+                      }`}
                     >
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: c.pin }} />
-                        <span className="text-xs font-medium text-slate-700">{zone.label}</span>
+                      {/* Rank number */}
+                      <span className="text-xs font-black text-slate-300 w-4 shrink-0 mt-0.5">
+                        {rank + 1}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2 mb-0.5">
+                          <span className="text-xs font-bold text-slate-800 truncate">{loc.name}</span>
+                          <span
+                            className="text-xs font-black shrink-0"
+                            style={{ color: meta.color }}
+                          >
+                            {loc.score}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span
+                            className="text-[10px] font-semibold px-1.5 py-0.5 rounded"
+                            style={{ background: meta.bg, color: meta.color }}
+                          >
+                            {loc.area}
+                          </span>
+                          <span className="text-[10px] text-slate-400">{loc.traffic}</span>
+                        </div>
                       </div>
-                      <span className="text-xs font-bold" style={{ color: c.pin }}>{zone.score}</span>
                     </button>
                   );
                 })}
               </div>
+
+              {/* Sidebar CTA */}
+              <div className="p-4 border-t border-slate-100">
+                <Link
+                  href="/pricing"
+                  className="block w-full text-center py-2.5 rounded-xl bg-[#0066FF] text-white text-xs font-bold hover:bg-[#0052CC] transition-colors"
+                >
+                  Get My Custom PublicityMap →
+                </Link>
+                <p className="text-[10px] text-slate-400 text-center mt-2">
+                  Reports for your exact service area
+                </p>
+              </div>
             </div>
 
-            <a
-              href="/pricing"
-              className="block w-full text-center px-4 py-3 rounded-xl bg-[#0066FF] text-white text-sm font-semibold hover:bg-[#0052CC] transition-colors shadow-lg shadow-blue-500/20"
-            >
-              Get My Map →
-            </a>
+            {/* Map */}
+            <div className="flex-1 relative">
+              <MapLeaflet
+                locations={visible}
+                activeId={activeId}
+                flyTarget={flyTarget}
+                onPinClick={handlePinClick}
+              />
+
+              {/* Mobile filter hint */}
+              <div className="absolute bottom-3 left-3 lg:hidden bg-white/90 backdrop-blur-sm rounded-xl px-3 py-2 shadow-md border border-slate-100 text-[11px] text-slate-500">
+                Tap a pin to see details
+              </div>
+            </div>
           </div>
         </div>
+
+        {/* Footer note */}
+        <p className="text-center text-xs text-slate-400 mt-4">
+          Sample data for Clark County, WA — your report uses data for your actual service area.
+        </p>
       </div>
     </section>
   );
