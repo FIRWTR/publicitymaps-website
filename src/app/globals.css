@@ -9,6 +9,7 @@
   --color-brand-500: #0066FF;
   --color-brand-600: #0052CC;
   --color-brand-700: #003D99;
+  --color-map-bg: #060d14;
 
   --font-sans: Inter, system-ui, sans-serif;
 
@@ -22,18 +23,100 @@
   }
 }
 
-* {
-  box-sizing: border-box;
-}
-
-html {
-  scroll-behavior: smooth;
-}
-
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
 body {
   background-color: #ffffff;
   color: #0F172A;
   font-family: Inter, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Map marker pulse rings ──────────────────────────────── */
+@keyframes pm-pulse {
+  0%   { transform: scale(0.9); opacity: 0.8; }
+  70%  { transform: scale(2.4); opacity: 0;   }
+  100% { transform: scale(2.4); opacity: 0;   }
+}
+@keyframes pm-scan-line {
+  0%   { top: 0%; opacity: 0.7; }
+  100% { top: 100%; opacity: 0; }
+}
+@keyframes pm-flicker {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.7; }
+}
+@keyframes pm-fade-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes pm-slide-right {
+  from { opacity: 0; transform: translateX(24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* Leaflet popup override for dark variant */
+.leaflet-popup-content-wrapper {
+  border-radius: 14px !important;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.5) !important;
+  padding: 0 !important;
+  overflow: hidden;
+}
+.leaflet-popup-content {
+  margin: 0 !important;
+}
+.leaflet-popup-tip-container {
+  display: none;
+}
+.leaflet-container {
+  font-family: Inter, system-ui, sans-serif;
+  background: #060d14;
+}
+/* hide leaflet attribution on hero to keep the map clean */
+.pm-hero-map .leaflet-control-attribution {
+  opacity: 0.3;
+  font-size: 9px;
+}
+
+/* Voyager tiles processed dark: bright road network, navy/steel background */
+/* Voyager has inherently high road contrast — we darken + tint rather than trying to
+   brighten a near-black tile that has little contrast to begin with */
+.pm-hero-map .pm-base-tiles .leaflet-tile {
+  filter: brightness(0.46) contrast(1.5) saturate(0.42) hue-rotate(190deg);
+}
+
+/* Label tiles float above heatmap — pure white text on transparent, max brightness */
+.pm-hero-map .pm-label-tiles .leaflet-tile {
+  filter: brightness(3.0) contrast(1.4) saturate(0);
+}
+
+/* Heatmap intensity slider — WebKit */
+input[type=range].pm-heat-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 4px;
+  outline: none;
+  cursor: pointer;
+  width: 100%;
+}
+input[type=range].pm-heat-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 0 10px rgba(255,102,0,0.9), 0 2px 6px rgba(0,0,0,0.5);
+  cursor: pointer;
+  border: none;
+}
+input[type=range].pm-heat-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border: none;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 0 10px rgba(255,102,0,0.9), 0 2px 6px rgba(0,0,0,0.5);
+  cursor: pointer;
 }
